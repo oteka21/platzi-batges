@@ -11,7 +11,7 @@ module.exports = {
   mode: 'production',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'js/[name].js',
+    filename: 'js/[name].[contenthash].dll.js',
     library: '[name]'
   },
   plugins: [

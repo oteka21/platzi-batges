@@ -2,6 +2,8 @@ const path = require('path')
 const HTMLWebpackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const webpack = require('webpack')
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const AddAssetHTMLWebpackPlugin = require('add-asset-html-webpack-plugin')
 
 
 // function to check if node env is set to production
@@ -11,11 +13,14 @@ const isProduction = () => process.env.NODE_ENV === 'production' ? true : false
 // declare plugins
 const plugins = [
   new HTMLWebpackPlugin({
-    template: require('html-webpack-template'),
-    inject: false,
+    template: path.resolve(__dirname, 'template.html'),
     appMountId: 'app',
-    title: 'React',
-    scripts: isProduction() ? ['/js/modules.js'] : null 
+    title: 'React'
+  }),
+  new AddAssetHTMLWebpackPlugin({
+    filepath: path.resolve(__dirname, 'dist/js/*.dll.js'),
+    outputPath: 'js',
+    publicPath: '/'
   })
 ]
 
@@ -23,10 +28,14 @@ const plugins = [
 if(isProduction()){
   plugins.push(
     new webpack.DllReferencePlugin({
-      manifest: require('./modules-manifest.json'),
+      manifest: require('./modules-manifest.json')
     }),
     new MiniCssExtractPlugin({
-      filename: 'css/[name].css'
+      filename: 'css/[name].css',
+      chunkFilename: 'css/[id].bundle.[contenthash].css'
+    }),
+    new CleanWebpackPlugin({
+      cleanOnceBeforeBuildPatterns: ['**/*.bundle.*']
     })
   )
 }
@@ -48,7 +57,7 @@ module.exports = {
   entry: path.resolve(__dirname, 'src/index.js'),
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'js/bundle.js',
+    filename: isProduction() ? 'js/bundle.[contenthash].js' : 'js/bundle.js',
     publicPath:'/'
   },
   mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
@@ -73,12 +82,8 @@ module.exports = {
           loader: 'url-loader',
           options: {
             limit: 1000,
-            fallback: {
-              loader: 'file-loader',
-              options: {
-                outputPath: 'assets/'
-              }
-            }
+            outputPath: 'assets/',
+            filename: '[name].[contenthash].[ext]'
           }
         },
       }
